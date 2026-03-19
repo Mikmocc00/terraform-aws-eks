@@ -8,8 +8,6 @@ from github import Github
 from repominer.metrics.terraform import TerraformMetricsExtractor
 
 # --- FIX PER L'ERRORE GIT IN GITHUB ACTIONS ---
-# Eseguiamo questo comando a runtime prima di tutto, 
-# così GitHub non può cancellare il permesso!
 os.system("git config --global --add safe.directory '*'")
 
 # 1. Sicurezza: questa action ora è dedicata solo a Terraform
@@ -30,12 +28,19 @@ for file in files:
     if not file.filename.endswith('.tf'):
         continue
 
+    print(f"\n--- Analisi file: {file.filename} ---")
     content = repo.get_contents(file.filename, ref=os.getenv('GITHUB_SHA')).decoded_content.decode()
     metrics = {}
 
     try:
         # Estrae le metriche usando repominer
         metrics = tf_extractor.get_product_metrics(content)
+        
+        # --- DEBUG: STAMPIAMO LE METRICHE ESTRATTE ---
+        print(f"📊 Metriche estratte per {file.filename}:")
+        print(json.dumps(metrics, indent=2))
+        # ---------------------------------------------
+        
     except Exception as e:
         print(f"⚠️ Errore di parsing in {file.filename}: {e}")
         sys.stdout.flush()
@@ -52,12 +57,14 @@ for file in files:
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
-            response_content = json.loads(response.content.decode())
-            print(f"✅ RISULTATO PREDIZIONE per {file.filename}:")
-            print(json.dumps(response_content, indent=2))
+            res = json.loads(response.content.decode())
+            is_bad = res.get("failure_prone", False)
+            icon = "❌ DIFETTOSO" if is_bad else "✅ PULITO"
+            
+            print(f"\n{icon} | File: {file.filename}")
+            print(f"Dettaglio risposta: {json.dumps(res, indent=2)}")
         else:
             print(f"❌ Errore dal backend. Status: {response.status_code}")
-            print(f"Dettaglio: {response.text}")
     except Exception as e:
         print(f"⚠️ Impossibile contattare il modello su Ngrok: {e}")
 
