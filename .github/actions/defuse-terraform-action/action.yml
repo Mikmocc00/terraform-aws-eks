@@ -1,1 +1,19 @@
-
+name: 'RADON DEFUSE GitHub Action for ci/cd'
+description: 'Perform Software Defect Prediction on committed files'
+inputs:
+  model:
+    description: 'model id. Can be found in the DEFUSE Model Manager dashboard'
+    required: true
+  language:
+    description: 'The language for the prediction. Choices: ansible|tosca|terraform'
+    required: true
+  url:
+    description: 'The URL to DEFUSE backend'
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.model }}
+    - ${{ inputs.language }}
+    - ${{ inputs.url }}
