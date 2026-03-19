@@ -6,55 +6,63 @@ jobs:
   defect_prediction:
     runs-on: ubuntu-latest
     steps:
-      # 1. Scarica il codice e il modello .joblib
+      # 1. Scarica il codice e la storia per il git diff
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 2 
+          fetch-depth: 2
 
-      # 2. Installa Python
+      # 2. Imposta l'ambiente Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
 
-      # 3. Installa le librerie con versioni SPECIFICHE
+      # 3. Installa dipendenze (Bloccando le versioni per compatibilità col modello)
       - name: Install Dependencies
         run: |
-          # Installiamo la 0.24.2 per evitare l'errore di incompatibilità del pickle
           pip install scikit-learn==0.24.2 pandas==1.3.5 joblib
           pip install git+https://github.com/Mikmocc00/radon-terraform-metrics.git
+          pip install git+https://github.com/Mikmocc00/radon-repository-miner.git
 
-      # 4. Esegue la predizione sui file modificati
+      # 4. Esegue la predizione in sicurezza
       - name: Run Prediction
         run: |
+          # Trova i file modificati
           CHANGED_FILES=$(git diff --name-only --diff-filter=AM HEAD^ HEAD | grep '\.tf$' || true)
           
           if [ -z "$CHANGED_FILES" ]; then
             echo "Nessun file Terraform modificato in questo push."
             exit 0
           fi
+          
+          # Passiamo la variabile in modo sicuro a Python
+          export CHANGED_FILES
 
           python3 -c "
-          import joblib, pandas as pd, os
-          from radon_terraform_metrics.import_metrics import general_metrics, configuration_metrics
+          import os, joblib, pandas as pd
+          from repominer.metrics.terraform import TerraformMetricsExtractor
 
-          # Carica il modello (assicurati che il nome del file sia identico a quello nella repo)
+          # Carica il modello (il nome deve corrispondere a quello nel repo)
           model = joblib.load('terraform_model.joblib')
           
-          files = '$CHANGED_FILES'.split()
+          # Inizializza l'estrattore ufficiale
+          extractor = TerraformMetricsExtractor(path_to_repo='.', clone_repo_to='.', at='release')
+          
+          files = os.environ['CHANGED_FILES'].split()
+          
           for f in files:
               if not os.path.exists(f): continue
-              with open(f, 'r') as stream:
+              
+              with open(f, 'r', encoding='utf-8') as stream:
                   content = stream.read()
                   
-                  # Estrazione metriche
-                  m = {**{k: v(content).count() for k, v in general_metrics.items()},
-                       **{k: v(content).count() for k, v in configuration_metrics.items()}}
+                  # Estrazione sicura delle metriche
+                  m = extractor.get_product_metrics(content)
                   
                   df = pd.DataFrame([m])
                   
-                  # Allinea le colonne (necessario per evitare errori di shape)
+                  # Allinea le feature richieste dal modello
                   if hasattr(model, 'feature_names_in_'):
                       df = df.reindex(columns=model.feature_names_in_, fill_value=0)
                       
