@@ -1,7 +1,5 @@
-ansiblemetrics>=0.4.2
 PyGithub==1.55
 requests==2.26.0
-tosca-metrics==0.0.11
 python-hcl2
 git+https://github.com/Mikmocc00/radon-terraform-metrics.git
 git+https://github.com/Mikmocc00/radon-repository-miner.git
