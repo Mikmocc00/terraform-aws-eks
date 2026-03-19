@@ -1,7 +1,7 @@
 /**
  * # Risorsa Password Casuale
  * Questa risorsa genera una password sicura di 16 caratteri.
- * Viene utilizzata per garantire la sicurezza degli accessi iniziali.
+ * Viene utilizzata per garantire la sicurezza degli accessi iniziali.dwdwdw
  */
 resource "random_password" "password_sicura" {
   length  = 16
