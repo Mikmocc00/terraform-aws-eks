@@ -18,14 +18,14 @@ jobs:
         with:
           python-version: '3.8'
 
-      # 3. Installa dipendenze (Bloccando le versioni per compatibilità col modello)
+      # 3. Installa dipendenze (Versioni compatibili con il tuo vecchio modello)
       - name: Install Dependencies
         run: |
           pip install scikit-learn==0.24.2 pandas==1.3.5 joblib
           pip install git+https://github.com/Mikmocc00/radon-terraform-metrics.git
           pip install git+https://github.com/Mikmocc00/radon-repository-miner.git
 
-      # 4. Esegue la predizione in sicurezza
+      # 4. Esegue la predizione (con gestione dei modelli salvati come dizionario)
       - name: Run Prediction
         run: |
           # Trova i file modificati
@@ -40,33 +40,62 @@ jobs:
           export CHANGED_FILES
 
           python3 -c "
-          import os, joblib, pandas as pd
+          import os, sys, joblib, pandas as pd
           from repominer.metrics.terraform import TerraformMetricsExtractor
 
-          # Carica il modello (il nome deve corrispondere a quello nel repo)
-          model = joblib.load('terraform_model.joblib')
+          # 1. Carica il file .joblib
+          print('--- Avvio Caricamento Modello ---')
+          loaded_data = joblib.load('terraform_model.joblib')
+          model = None
+          features = None
+
+          # 2. Estrai il modello se è dentro un dizionario
+          if isinstance(loaded_data, dict):
+              print(f'DEBUG: Trovato un dizionario con queste chiavi: {list(loaded_data.keys())}')
+              for key, value in loaded_data.items():
+                  if hasattr(value, 'predict'):
+                      model = value
+                      print(f'DEBUG: Modello di predizione trovato nella chiave -> {key}')
+                      break
+              
+              # Cerca l\'elenco delle features (colonne) se salvate
+              if 'features' in loaded_data:
+                  features = loaded_data['features']
+              elif 'columns' in loaded_data:
+                  features = loaded_data['columns']
+          else:
+              model = loaded_data
+              print('DEBUG: Il file conteneva direttamente il modello.')
+
+          if model is None:
+              print('ERRORE CRITICO: Nessun modello valido con funzione predict() trovato nel file .joblib!')
+              sys.exit(1)
           
-          # Inizializza l'estrattore ufficiale
+          # 3. Inizializza l'estrattore ufficiale
+          print('\n--- Avvio Estrazione Metriche ---')
           extractor = TerraformMetricsExtractor(path_to_repo='.', clone_repo_to='.', at='release')
           
           files = os.environ['CHANGED_FILES'].split()
           
           for f in files:
               if not os.path.exists(f): continue
+              print(f'\nAnalizzo file: {f}')
               
               with open(f, 'r', encoding='utf-8') as stream:
                   content = stream.read()
                   
                   # Estrazione sicura delle metriche
                   m = extractor.get_product_metrics(content)
-                  
                   df = pd.DataFrame([m])
                   
-                  # Allinea le feature richieste dal modello
-                  if hasattr(model, 'feature_names_in_'):
+                  # 4. Allinea le colonne usando le features trovate o quelle del modello
+                  if features is not None:
+                      df = df.reindex(columns=features, fill_value=0)
+                  elif hasattr(model, 'feature_names_in_'):
                       df = df.reindex(columns=model.feature_names_in_, fill_value=0)
-                      
+                  
+                  # 5. Esegui la predizione
                   pred = model.predict(df)
                   result = '❌ DIFETTOSO' if pred[0] == 1 else '✅ PULITO'
-                  print(f'ANALISI push: {f} -> {result}')
+                  print(f'>> ESITO FINALE: {f} -> {result}')
           "
