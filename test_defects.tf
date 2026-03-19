@@ -56,5 +56,5 @@ resource "aws_security_group" "allow_all" {
 # Output senza descrizione dello scopo.
 output "db_endpoint" {
   value = aws_db_instance.database_test.endpoint
-  # ERRORE: Manca la description dell'outputsssslamknasaza
+  # ERRORE: Manca la description dell'outputsssslamknasazaaaaa
 }
