@@ -10,7 +10,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 2 # Necessario per confrontare l'ultimo commit con il precedente
+          fetch-depth: 2 
 
       # 2. Installa Python
       - name: Set up Python
@@ -18,16 +18,16 @@ jobs:
         with:
           python-version: '3.8'
 
-      # 3. Installa le librerie necessarie
+      # 3. Installa le librerie con versioni SPECIFICHE
       - name: Install Dependencies
         run: |
-          pip install joblib pandas scikit-learn
+          # Installiamo la 0.24.2 per evitare l'errore di incompatibilità del pickle
+          pip install scikit-learn==0.24.2 pandas==1.3.5 joblib
           pip install git+https://github.com/Mikmocc00/radon-terraform-metrics.git
 
       # 4. Esegue la predizione sui file modificati
       - name: Run Prediction
         run: |
-          # Trova i file .tf aggiunti (A) o modificati (M) nell'ultimo push
           CHANGED_FILES=$(git diff --name-only --diff-filter=AM HEAD^ HEAD | grep '\.tf$' || true)
           
           if [ -z "$CHANGED_FILES" ]; then
@@ -39,7 +39,7 @@ jobs:
           import joblib, pandas as pd, os
           from radon_terraform_metrics.import_metrics import general_metrics, configuration_metrics
 
-          # Carica il modello che hai pushato nella repo
+          # Carica il modello (assicurati che il nome del file sia identico a quello nella repo)
           model = joblib.load('terraform_model.joblib')
           
           files = '$CHANGED_FILES'.split()
@@ -47,13 +47,14 @@ jobs:
               if not os.path.exists(f): continue
               with open(f, 'r') as stream:
                   content = stream.read()
-                  # Estrazione metriche identica al tuo miner/backend
+                  
+                  # Estrazione metriche
                   m = {**{k: v(content).count() for k, v in general_metrics.items()},
                        **{k: v(content).count() for k, v in configuration_metrics.items()}}
                   
                   df = pd.DataFrame([m])
                   
-                  # Allinea le colonne se il modello ha nomi specifici
+                  # Allinea le colonne (necessario per evitare errori di shape)
                   if hasattr(model, 'feature_names_in_'):
                       df = df.reindex(columns=model.feature_names_in_, fill_value=0)
                       
