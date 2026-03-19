@@ -1,107 +1,16 @@
-name: Terraform Local Prediction
-
 on: [push]
 
 jobs:
-  defect_prediction:
+  defect_prediction_job:
     runs-on: ubuntu-latest
+    name: Run DEFUSE's model for Terraform
     steps:
-      # 1. Scarica TUTTA la storia del codice (fondamentale per le metriche di processo Git)
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Defect Prediction
+        id: defect_prediction
+        uses: sighzeero/EQS-radon-defuse-action@v1.0.6
         with:
-          fetch-depth: 0
-
-      # 2. Imposta l'ambiente Python
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-
-      # 3. Installa dipendenze (Versioni compatibili con il tuo vecchio modello)
-      - name: Install Dependencies
-        run: |
-          pip install scikit-learn==0.24.2 pandas==1.3.5 joblib
-          pip install git+https://github.com/Mikmocc00/radon-terraform-metrics.git
-          pip install git+https://github.com/Mikmocc00/radon-repository-miner.git
-
-      # 4. Esegue la predizione (con estrazione di Prodotto e Processo)
-      - name: Run Prediction
-        run: |
-          # Trova i file modificati
-          CHANGED_FILES=$(git diff --name-only --diff-filter=AM HEAD^ HEAD | grep '\.tf$' || true)
-          
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "Nessun file Terraform modificato in questo push."
-            exit 0
-          fi
-          
-          # Esporta le variabili per lo script Python
-          export CHANGED_FILES
-          export CURRENT_COMMIT=$(git rev-parse HEAD)
-
-          python3 -c "
-          import os, sys, joblib, pandas as pd
-          from repominer.metrics.terraform import TerraformMetricsExtractor
-
-          print('--- Avvio Caricamento Modello ---')
-          loaded_data = joblib.load('terraform_model.joblib')
-          model = loaded_data.get('estimator', loaded_data)
-          features = loaded_data.get('features', [])
-          
-          print(f'DEBUG: Il modello si aspetta {len(features)} colonne esatte.')
-
-          print('\n--- Avvio Estrazione Metriche ---')
-          extractor = TerraformMetricsExtractor(path_to_repo='.', clone_repo_to='.', at='release')
-          
-          files = os.environ['CHANGED_FILES'].split()
-          commit_hash = os.environ['CURRENT_COMMIT']
-          
-          for f in files:
-              if not os.path.exists(f): continue
-              print(f'\nAnalizzo file: {f}')
-              
-              with open(f, 'r', encoding='utf-8') as stream:
-                  content = stream.read()
-                  
-              # 1. Estrai Metriche di PRODOTTO (dal testo del codice)
-              prod_m = extractor.get_product_metrics(content)
-              
-              # 2. Estrai Metriche di PROCESSO (dalla storia di Git fino al commit attuale)
-              try:
-                  proc_m = extractor.get_process_metrics(f, to_commit=commit_hash)
-              except Exception as e:
-                  print(f'Avviso: Estrazione metriche di processo fallita: {e}. Procedo senza.')
-                  proc_m = {}
-              
-              # Unisci tutto in un unico dizionario
-              m = {**prod_m, **proc_m}
-              df = pd.DataFrame([m])
-              print(f'DEBUG: Metriche totali estratte da repominer: {df.shape[1]}')
-              
-              # 3. Allinea le colonne esattamente come le vuole il modello
-              if len(features) > 0:
-                  for col in features:
-                      if col not in df.columns:
-                          df[col] = 0 # Riempi eventuali metriche mancanti con 0
-                  # Forza l'ordine esatto delle colonne
-                  df = df[features]
-              
-              print(f'DEBUG: Shape finale passata alla pipeline: {df.shape}')
-              
-              # 4. Predizione con gestione degli errori
-              try:
-                  pred = model.predict(df)
-                  result = '❌ DIFETTOSO' if pred[0] == 1 else '✅ PULITO'
-                  print(f'>> ESITO FINALE: {f} -> {result}')
-              except Exception as e:
-                  print(f'ERRORE DI PREDIZIONE PANDAS: {e}')
-                  print('Provo a convertire i dati in array numpy nudo e crudo...')
-                  try:
-                      pred = model.predict(df.values)
-                      result = '❌ DIFETTOSO' if pred[0] == 1 else '✅ PULITO'
-                      print(f'>> ESITO FINALE: {f} -> {result}')
-                  except Exception as e2:
-                      print(f'ERRORE CRITICO ANCHE CON ARRAY: {e2}')
-                      sys.exit(1)
-          "
+          model: 'gleWeNXLiV32WX3tlNLD' # <-- SOSTITUISCI con l'ID copiato da Defuse
+          language: 'terraform'              # <-- CAMBIATO da 'ansible' a 'terraform'
+          url: 'https://gauzy-virgie-timbreled.ngrok-free.dev' # <-- SOSTITUISCI con il tuo URL Ngrok attivo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
