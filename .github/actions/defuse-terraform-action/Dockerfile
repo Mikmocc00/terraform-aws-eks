@@ -9,6 +9,9 @@ RUN apt-get update \
 # Install git
 RUN apt-get install git -y
 
+# --- FIX PER L'ERRORE GIT DI GITHUB ACTIONS ---
+RUN git config --global --add safe.directory '*'
+
 # Copies your code file from your action repository to the filesystem path `/` of the container
 COPY entrypoint.py /entrypoint.py
 COPY requirements.txt /requirements.txt
