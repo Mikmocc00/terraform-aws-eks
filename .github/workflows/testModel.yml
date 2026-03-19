@@ -1,0 +1,63 @@
+name: Terraform Local Prediction
+
+on: [push]
+
+jobs:
+  defect_prediction:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Scarica il codice e il modello .joblib
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2 # Necessario per confrontare l'ultimo commit con il precedente
+
+      # 2. Installa Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      # 3. Installa le librerie necessarie
+      - name: Install Dependencies
+        run: |
+          pip install joblib pandas scikit-learn
+          pip install git+https://github.com/Mikmocc00/radon-terraform-metrics.git
+
+      # 4. Esegue la predizione sui file modificati
+      - name: Run Prediction
+        run: |
+          # Trova i file .tf aggiunti (A) o modificati (M) nell'ultimo push
+          CHANGED_FILES=$(git diff --name-only --diff-filter=AM HEAD^ HEAD | grep '\.tf$' || true)
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "Nessun file Terraform modificato in questo push."
+            exit 0
+          fi
+
+          python3 -c "
+          import joblib, pandas as pd, os
+          from radon_terraform_metrics.import_metrics import general_metrics, configuration_metrics
+
+          # Carica il modello che hai pushato nella repo
+          model = joblib.load('terraform_model.joblib')
+          
+          files = '$CHANGED_FILES'.split()
+          for f in files:
+              if not os.path.exists(f): continue
+              with open(f, 'r') as stream:
+                  content = stream.read()
+                  # Estrazione metriche identica al tuo miner/backend
+                  m = {**{k: v(content).count() for k, v in general_metrics.items()},
+                       **{k: v(content).count() for k, v in configuration_metrics.items()}}
+                  
+                  df = pd.DataFrame([m])
+                  
+                  # Allinea le colonne se il modello ha nomi specifici
+                  if hasattr(model, 'feature_names_in_'):
+                      df = df.reindex(columns=model.feature_names_in_, fill_value=0)
+                      
+                  pred = model.predict(df)
+                  result = '❌ DIFETTOSO' if pred[0] == 1 else '✅ PULITO'
+                  print(f'ANALISI push: {f} -> {result}')
+          "
