@@ -1,3 +1,5 @@
+name: Defect Prediction CI
+
 on: [push]
 
 jobs:
@@ -9,8 +11,8 @@ jobs:
         id: defect_prediction
         uses: sighzeero/EQS-radon-defuse-action@v1.0.6
         with:
-          model: 'gleWeNXLiV32WX3tlNLD' # <-- SOSTITUISCI con l'ID copiato da Defuse
-          language: 'terraform'              # <-- CAMBIATO da 'ansible' a 'terraform'
-          url: 'https://gauzy-virgie-timbreled.ngrok-free.dev' # <-- SOSTITUISCI con il tuo URL Ngrok attivo
+          model: 'gleWeNXLiV32WX3tlNLD'
+          language: 'terraform'
+          url: 'https://gauzy-virgie-timbreled.ngrok-free.dev'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
