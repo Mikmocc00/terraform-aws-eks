@@ -1,60 +1,20 @@
-# ==========================================================
-# FILE DI TEST: POSSIBILI DIFETTI CONFIG E DOCUMENTAZIONE
-# ==========================================================
+# Un semplice bucket S3 con configurazione standard
+# Questo file ha poche risorse e nessuna logica complessa
 
-# 1. DIFETTO DOCUMENTATION: 
-# Variabile senza 'type' e senza 'description'. 
-# Questo è un segnale forte per il miner di mancanza di documentazione.
-variable "api_key" {
-  default = "AKIA-SECRET-12345" 
-}
+resource "aws_s3_bucket" "my_safe_bucket" {
+  bucket = "my-unique-test-bucket-2026-03"
 
-# 2. DIFETTO CONFIGURATION DATA:
-# Hardcoding di dati sensibili e configurazioni di rete.
-resource "aws_db_instance" "database_test" {
-  allocated_storage    = 20
-  engine               = "mysql"
-  instance_class       = "db.t2.micro"
-  
-  # ERRORE: Credenziali in chiaro (Config Data Defect)
-  name                 = "mydb"
-  username             = "admin"
-  password             = "PasswordMoltoInsicura123!" 
-  
-  # ERRORE: Parametro critico hardcoded invece di usare una variabile
-  parameter_group_name = "default.mysql5.7"
-  publicly_accessible  = true
-  skip_final_snapshot  = true
-}
-
-# 3. DIFETTO DOCUMENTATION & CONFIG:
-# Una risorsa complessa (Security Group) con regole "wide open" 
-# e totale assenza di commenti (#) o descrizioni.
-resource "aws_security_group" "allow_all" {
-  name        = "allow_all_traffic"
-  # Manca la description qui
-
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    # ERRORE: CIDR wide open hardcoded (Config Data)
-    cidr_blocks = ["0.0.0.0/0"]
+  tags = {
+    Name        = "SafeBucket"
+    Environment = "Dev"
   }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  # Nessun tag 'Name' o commento esplicativo
 }
 
-# 4. ALTRO DIFETTO DOCUMENTATION:
-# Output senza descrizione dello scopo.
-output "db_endpoint" {
-  value = aws_db_instance.database_test.endpoint
-  # ERRORE: Manca la description dell'outputsssslamknasazaaaaaqaqzazazazazzaaapoiaaaappp
+resource "aws_s3_bucket_public_access_block" "example" {
+  bucket = aws_s3_bucket.my_safe_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
