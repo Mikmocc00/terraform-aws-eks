@@ -1,18 +1,15 @@
 on: [push]
-
 jobs:
   defect_prediction_job:
     runs-on: ubuntu-latest
     name: Run DEFUSE's model for Terraform
     steps:
-      # SCARICA IL CODICE DELLA TUA REPO PRIMA DI TUTTO
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # USA L'ACTION CHE HAI APPENA CREATO IN LOCALE
       - name: Defect Prediction
         id: defect_prediction
-        uses: ./.github/actions/defuse-terraform-action/ # <-- PERCORSO CORRETTO!
+        uses: Mikmocc00/defuse-terraform-action@v1
         with:
           model: 'gleWeNXLiV32WX3tlNLD'
           language: 'terraform'
