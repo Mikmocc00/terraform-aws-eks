@@ -5,5 +5,5 @@
  */
 resource "random_password" "password_sicura" {
   length  = 16
-  special = true # Utilizzo di caratteri speciali per aumentare la robustezzai
+  special = true # Utilizzo di caratteri speciali per aumentare la robustezzaiaa
 }
