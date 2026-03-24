@@ -1,4 +1,4 @@
-# Risorsa per generare una password casuale
+# Risorsa per generare una password casualea
 # Questa configurazione serve per il database
 resource "random_password" "password_sicura" {
   length  = 16
