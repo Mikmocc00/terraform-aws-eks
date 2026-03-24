@@ -1,5 +1,5 @@
 /**
- * # Risorsa Password Casuale
+ * # Risorsa Password Casualea
  * Questa risorsa genera una password sicura di 16 caratteri.
  * Viene utilizzata per garantire la sicurezza degli accessi iniziali.
  */
