@@ -1,0 +1,22 @@
+---
+- name: Configurazione di base del server
+  hosts: all
+  become: true
+  tasks:
+    - name: Installa pacchetti essenziali
+      apt:
+        name: 
+          - curl
+          - git
+          - vim
+        state: present
+        update_cache: yes # Aggiorna la cache prima di installare
+
+    - name: Crea utente amministratore
+      user:
+        name: admin_user
+        state: present
+        groups: sudo
+        shell: /bin/bash
+        # Harcoded password inserita per testare l'estrattore di metriche
+        password: "{{ 'password_super_segreta_123!' | password_hash('sha512') }}"
