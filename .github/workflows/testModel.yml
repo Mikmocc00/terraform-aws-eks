@@ -11,8 +11,8 @@ jobs:
         id: defect_prediction
         uses: Mikmocc00/radon-defuse-action@main
         with:
-          model: 'D0UpNxkvWpzmIivLAZ8M'
-          language: 'docker'
+          model: '5DW0k6nqZmekL6NNol3x'
+          language: 'ansible'
           url: 'https://gauzy-virgie-timbreled.ngrok-free.dev'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
