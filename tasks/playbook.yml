@@ -19,4 +19,4 @@
         groups: sudo
         shell: /bin/bash
         # Harcoded password inserita per testare l'estrattore di metriche
-        password: "{{ 'password_super_segreta_122323233!' | password_hash('sha512') }wcewce  wf  efewf}"
+        password: "{{ 'password_super_segreta_122323233!' | password_hash('sha512') }wcewce  wfff  efewf}"
