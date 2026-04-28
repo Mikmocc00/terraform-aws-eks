@@ -9,7 +9,7 @@ jobs:
 
       - name: Defect Prediction
         id: defect_prediction
-        uses: Mikmocc00/radon-defuse-action@v1
+        uses: Mikmocc00/radon-defuse-action@main
         with:
           model: 'D0UpNxkvWpzmIivLAZ8M'
           language: 'docker'
