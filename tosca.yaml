@@ -1,0 +1,35 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+description: Template TOSCA di test per RADON DEFUSE con metriche multiple
+
+topology_template:
+  inputs:
+    db_password:
+      type: string
+      description: Password del database (Anti-pattern se passata in chiaro)
+      default: "admin123"
+
+  node_templates:
+    # Nodo 1: Un server di calcolo
+    my_compute_node:
+      type: tosca.nodes.Compute
+      capabilities:
+        host:
+          properties:
+            num_cpus: 2
+            disk_size: 10 GB
+            mem_size: 4096 MB
+
+    # Nodo 2: Un database ospitato sul server
+    my_database_node:
+      type: tosca.nodes.Database
+      properties:
+        user: admin
+        password: { get_input: db_password }
+      requirements:
+        - host: my_compute_node
+      interfaces:
+        Standard:
+          create: scripts/create_db.sh
+          start: scripts/start_db.sh
+          stop: scripts/stop_db.sh
