@@ -11,7 +11,7 @@ jobs:
         id: defect_prediction
         uses: Mikmocc00/radon-defuse-action@v1
         with:
-          model: 'H8ww2Zee76xj9wlOlJdU'
+          model: '5DW0k6nqZmekL6NNol3x'
           language: 'ansible'
           url: 'https://gauzy-virgie-timbreled.ngrok-free.dev'
         env:
