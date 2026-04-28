@@ -11,7 +11,7 @@ jobs:
         id: defect_prediction
         uses: Mikmocc00/radon-defuse-action@main
         with:
-          model: ' uQeHxD7U9KM415xXLam8'
+          model: 'uQeHxD7U9KM415xXLam8'
           language: 'kubernetes'
           url: 'https://gauzy-virgie-timbreled.ngrok-free.dev'
         env:
