@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vulnerable-webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      # 1. ANTI-PATTERN: Uso della rete dell'host (massimo rischio di sicurezza)
+      hostNetwork: true
+      
+      containers:
+      - name: frontend
+        # 2. ANTI-PATTERN: Uso del tag "latest" (nessuna garanzia di immutabilità)
+        image: nginx:latest
+        
+        # 3. ANTI-PATTERN: Container in esecuzione in modalità privilegiata
+        securityContext:
+          privileged: true
+          allowPrivilegeEscalation: true
+          
+        ports:
+        - containerPort: 80
+        
+        # 4. ANTI-PATTERN GRAVE: Nessun limite o richiesta di risorse configurati (CPU/RAM).
+        # Questo può causare il blocco dell'intero nodo (OOM).
