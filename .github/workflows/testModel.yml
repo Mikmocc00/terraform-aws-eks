@@ -11,8 +11,8 @@ jobs:
         id: defect_prediction
         uses: Mikmocc00/radon-defuse-action@v1
         with:
-          model: 'Y8TF9XVVFFTRtARjirkB'
-          language: 'terraform'
+          model: 'H8ww2Zee76xj9wlOlJdU'
+          language: 'ansible'
           url: 'https://gauzy-virgie-timbreled.ngrok-free.dev'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
