@@ -9,7 +9,7 @@ jobs:
 
       - name: Defect Prediction
         id: defect_prediction
-        uses: Mikmocc00/defuse-terraform-action@v1
+        uses: Mikmocc00/radon-defuse-action@v1
         with:
           model: 'gleWeNXLiV32WX3tlNLD'
           language: 'terraform'
